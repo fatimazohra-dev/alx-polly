@@ -1,0 +1,283 @@
+# Alx Polly - Project Rules & Conventions
+
+## 📁 Project Structure Rules
+
+### App Router Organization
+- Use **App Router** with Next.js 15+ conventions
+- Group related routes with parentheses: `(auth)/`, `(dashboard)/`
+- Place page components in `page.tsx` files within route directories
+- Use `layout.tsx` for shared layouts within route groups
+- Store API routes in `app/api/` following RESTful conventions
+
+### Component Organization
+```
+src/components/
+├── ui/           # Shadcn/ui base components only
+├── auth/         # Authentication-related components
+├── polls/        # Poll-specific business components  
+├── dashboard/    # Dashboard-specific components
+└── layout/       # Layout and navigation components
+```
+
+### Library Structure
+```
+src/lib/
+├── supabase/     # Supabase client configurations
+├── types/        # TypeScript type definitions
+└── utils.ts      # Utility functions (shadcn requirement)
+```
+
+## 🎨 UI Component Rules
+
+### Shadcn/ui Usage
+- **Always use Shadcn/ui components** for base UI elements (Button, Input, Card, etc.)
+- **Never modify** components in `src/components/ui/` directly
+- **Compose business components** using Shadcn/ui primitives
+- Use `cn()` utility from `@/lib/utils` for conditional styling
+- Install new Shadcn components with: `npx shadcn@latest add [component]`
+
+### Component Patterns
+```tsx
+// ✅ Good: Business component using Shadcn/ui
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+export function PollCard({ poll }: PollCardProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{poll.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Button asChild>
+          <Link href={`/polls/${poll.id}`}>View Poll</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ❌ Bad: Custom styled components instead of Shadcn
+export function PollCard({ poll }: PollCardProps) {
+  return (
+    <div className="border rounded-lg p-4">
+      <h3>{poll.title}</h3>
+      <a href={`/polls/${poll.id}`} className="bg-blue-500 text-white px-4 py-2">
+        View Poll
+      </a>
+    </div>
+  )
+}
+```
+
+## 🔐 Supabase Authentication Rules
+
+### Auth Client Usage
+- Use `@/lib/supabase/client` for **client-side** auth operations
+- Use `@/lib/supabase/server` for **server-side** data fetching
+- Use `@/lib/supabase/middleware` for **route protection**
+- Always handle auth errors with proper user feedback
+
+### Auth Patterns
+```tsx
+// ✅ Client-side auth (forms, user actions)
+"use client"
+import { createClient } from '@/lib/supabase/client'
+
+// ✅ Server-side auth (protected pages)
+import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/auth'
+
+export default async function ProtectedPage() {
+  const user = await requireAuth() // Redirects if not authenticated
+  // ...
+}
+```
+
+### Auth Context Rules
+- Use `useAuth()` hook for accessing user state in client components
+- Always check loading state before rendering auth-dependent content
+- Handle auth errors gracefully with user-friendly messages
+- Use middleware for route protection, not client-side checks
+
+## 📝 Form Handling Rules
+
+### Form Libraries
+- Use **React Hook Form** for complex forms with validation
+- Use **Zod** for schema validation and type safety
+- Integrate with Shadcn/ui form components
+- Always provide loading states and error handling
+
+### Form Patterns
+```tsx
+// ✅ Good: React Hook Form + Zod + Shadcn
+"use client"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+})
+
+export function CreatePollForm() {
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { title: "", description: "" }
+  })
+
+  // Form implementation...
+}
+
+// ❌ Bad: Manual state management
+export function CreatePollForm() {
+  const [title, setTitle] = useState("")
+  const [error, setError] = useState("")
+  // Manual validation and error handling...
+}
+```
+
+## 🗄️ Database Integration Rules
+
+### Supabase Database Patterns
+- Use **Row Level Security (RLS)** for all user data
+- Create database policies that filter by `auth.uid()`
+- Use TypeScript types generated from Supabase schema
+- Handle database errors with user-friendly messages
+
+### Data Fetching Rules
+- Use **Server Components** for initial data loading
+- Use **React Query/SWR** for client-side data fetching and caching
+- Implement optimistic updates for better UX
+- Always handle loading and error states
+
+```tsx
+// ✅ Server Component data fetching
+import { createClient } from '@/lib/supabase/server'
+
+export default async function PollsPage() {
+  const supabase = await createClient()
+  const { data: polls, error } = await supabase
+    .from('polls')
+    .select('*')
+    .eq('is_active', true)
+
+  if (error) {
+    // Handle error appropriately
+  }
+
+  return <PollsList polls={polls || []} />
+}
+```
+
+## 🎯 TypeScript Rules
+
+### Type Safety
+- Define interfaces in `/lib/types/index.ts`
+- Use Supabase-generated types when possible
+- Avoid `any` type - use proper type definitions
+- Export and reuse common type patterns
+
+### Type Patterns
+```tsx
+// ✅ Good: Proper type definitions
+interface PollCardProps {
+  poll: Omit<Poll, 'options' | 'allowMultipleVotes'>
+}
+
+export function PollCard({ poll }: PollCardProps) {
+  // Component implementation
+}
+
+// ❌ Bad: Using any or missing types
+export function PollCard({ poll }: any) {
+  // No type safety
+}
+```
+
+## 🚀 Performance Rules
+
+### Code Splitting & Loading
+- Use **dynamic imports** for heavy components
+- Implement **loading states** for all async operations
+- Use **Suspense boundaries** appropriately
+- Optimize images with Next.js Image component
+
+### Client/Server Optimization
+- Prefer **Server Components** when possible
+- Use **"use client"** directive only when necessary
+- Implement proper **error boundaries**
+- Use **React.memo()** for expensive re-renders
+
+## 📱 Responsive Design Rules
+
+### Mobile-First Approach
+- Use Tailwind CSS responsive utilities (`sm:`, `md:`, `lg:`)
+- Test all components on mobile devices
+- Ensure touch targets are minimum 44px
+- Use Shadcn/ui responsive patterns
+
+### Accessibility Rules
+- Include proper ARIA labels
+- Ensure keyboard navigation works
+- Use semantic HTML elements
+- Test with screen readers
+
+## 🔧 Development Workflow Rules
+
+### File Naming Conventions
+- Use **kebab-case** for file names: `poll-card.tsx`
+- Use **PascalCase** for component names: `PollCard`
+- Use **camelCase** for functions and variables
+- Use **UPPER_CASE** for constants
+
+### Import/Export Rules
+```tsx
+// ✅ Good: Consistent import order
+import { NextRequest } from 'next/server'           // External libraries
+import { Button } from "@/components/ui/button"     // UI components
+import { createClient } from '@/lib/supabase/server' // Internal utilities
+import type { Poll } from '@/lib/types'             // Types (with 'type' keyword)
+
+// ✅ Good: Named exports for components
+export function PollCard() { }
+
+// ✅ Good: Default export for pages
+export default function PollsPage() { }
+```
+
+### Error Handling Rules
+- Always handle Supabase errors gracefully
+- Provide meaningful error messages to users
+- Log errors for debugging in development
+- Use try/catch blocks for async operations
+- Implement fallback UI for error states
+
+---
+
+## 🎯 AI Scaffolding Guidelines
+
+When using AI to generate code for this project:
+
+1. **Always specify**: "Use Shadcn/ui components and follow the project structure"
+2. **Include context**: "This is for a Next.js 15 polling app with Supabase auth"
+3. **Request patterns**: "Follow the established patterns in /components/polls/"
+4. **Specify auth**: "Include proper authentication checks using useAuth() or requireAuth()"
+5. **Ask for types**: "Include proper TypeScript types from /lib/types/"
+
+### Example AI Prompt Template:
+```
+Create a [component/page/feature] for my Next.js 15 polling app. 
+
+Requirements:
+- Use Shadcn/ui components (Button, Card, Input, etc.)
+- Follow the project structure: /app/polls/, /components/polls/
+- Include Supabase authentication with useAuth() hook
+- Use TypeScript with proper types from @/lib/types
+- Include loading states and error handling
+- Follow the established patterns in the codebase
+```
