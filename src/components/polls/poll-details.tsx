@@ -4,11 +4,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Check } from "lucide-react";
 import type { Poll } from "@/lib/types";
+import { PollResultChart } from "./PollResultChart";
 
 interface PollDetailsProps {
   poll: Poll;
@@ -18,6 +18,7 @@ export function PollDetails({ poll }: PollDetailsProps) {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [hasVoted, setHasVoted] = useState(poll.hasVoted || false);
   const [isVoting, setIsVoting] = useState(false);
+  const showResults = hasVoted || !poll.isActive;
 
   const handleOptionSelect = (optionId: string) => {
     if (hasVoted || !poll.isActive) return;
@@ -76,10 +77,6 @@ export function PollDetails({ poll }: PollDetailsProps) {
     } finally {
       setIsVoting(false);
     }
-  };
-
-  const getPercentage = (votes: number) => {
-    return poll.totalVotes > 0 ? Math.round((votes / poll.totalVotes) * 100) : 0;
   };
 
   const formatDate = (date: Date) => {
@@ -151,47 +148,35 @@ export function PollDetails({ poll }: PollDetailsProps) {
           )}
         </CardHeader>
         <CardContent className="space-y-4">
-          {poll.options.map((option) => {
-            const percentage = getPercentage(option.votes);
-            const isSelected = selectedOptions.includes(option.id);
-            const showResults = hasVoted || !poll.isActive;
+          {showResults ? (
+            <PollResultChart data={poll.options} />
+          ) : (
+            <>
+              {poll.options.map((option) => {
+                const isSelected = selectedOptions.includes(option.id);
+                return (
+                  <div
+                    key={option.id}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "hover:border-gray-300"
+                    }`}
+                    onClick={() => handleOptionSelect(option.id)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{option.text}</span>
+                    </div>
+                  </div>
+                );
+              })}
 
-            return (
-              <div
-                key={option.id}
-                className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                  !showResults && poll.isActive
-                    ? isSelected
-                      ? "border-primary bg-primary/5"
-                      : "hover:border-gray-300"
-                    : "cursor-default"
-                }`}
-                onClick={() => handleOptionSelect(option.id)}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">{option.text}</span>
-                  {showResults && (
-                    <span className="text-sm text-muted-foreground">
-                      {option.votes} votes ({percentage}%)
-                    </span>
-                  )}
-                </div>
-                
-                {showResults && (
-                  <Progress value={percentage} className="h-2" />
-                )}
-              </div>
-            );
-          })}
-
-          {!hasVoted && poll.isActive && selectedOptions.length > 0 && (
-            <Button 
-              onClick={handleVote} 
-              disabled={isVoting}
-              className="w-full"
-            >
-              {isVoting ? "Submitting..." : "Submit Vote"}
-            </Button>
+              {selectedOptions.length > 0 && (
+                <Button onClick={handleVote} disabled={isVoting} className="w-full">
+                  {isVoting ? "Submitting..." : "Submit Vote"}
+                </Button>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
