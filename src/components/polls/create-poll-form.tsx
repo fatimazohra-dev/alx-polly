@@ -68,14 +68,20 @@ export function CreatePollForm() {
     setError(null);
 
     try {
-      // TODO: Implement Supabase poll creation following our database rules
-      console.log("Creating poll:", data);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to new poll (following our routing patterns)
-      router.push('/polls'); // Will redirect to actual poll when created
+      const response = await fetch('/api/polls', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create poll');
+      }
+
+      const poll = await response.json();
+      router.push(`/polls/${poll.id}`);
     } catch (error) {
       console.error("Poll creation error:", error);
       setError("Failed to create poll. Please try again.");
