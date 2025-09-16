@@ -18,6 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth/auth-provider";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export function Navigation() {
   const pathname = usePathname();
@@ -70,6 +71,8 @@ export function Navigation() {
             </Link>
           </div>
           
+          <ThemeToggle />
+
           {isSupabaseConfigured ? (
             isAuthenticated ? (
               <DropdownMenu>
@@ -94,7 +97,7 @@ export function Navigation() {
                     <Link href="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Profile</Link>
+                    <Link href="/profile/settings">Settings</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()}>
                     Sign out

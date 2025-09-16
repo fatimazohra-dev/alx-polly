@@ -1,0 +1,5 @@
+1.  **Tech Stack:** All code must use the project's stack: Next.js, React, TypeScript, and Tailwind CSS. Backend logic is handled via Supabase.
+2.  **UI Components:** Always use existing `shadcn/ui` components from `@/components/ui` for consistency. New components should follow the existing structure in `src/components`.
+3.  **TypeScript & Typing:** Strictly avoid the `any` type. Use specific types and interfaces. For Supabase client instances, always use the `Database` type from `@/lib/types/supabase`.
+4.  **API Routes:** Place all server-side data handling in API routes within `src/app/api`. Every route that modifies data must first validate the user's session using the server-side Supabase client.
+5.  **Code Style:** Use the `cn()` utility for applying conditional Tailwind CSS classes. Follow existing patterns for file structure and naming conventions.
