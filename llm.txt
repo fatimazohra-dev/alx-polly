@@ -3,3 +3,6 @@
 3.  **TypeScript & Typing:** Strictly avoid the `any` type. Use specific types and interfaces. For Supabase client instances, always use the `Database` type from `@/lib/types/supabase`.
 4.  **API Routes:** Place all server-side data handling in API routes within `src/app/api`. Every route that modifies data must first validate the user's session using the server-side Supabase client.
 5.  **Code Style:** Use the `cn()` utility for applying conditional Tailwind CSS classes. Follow existing patterns for file structure and naming conventions.
+6.  **Dark Mode / Theme:**Always use context-based theme provider for dark/light mode.
+# llm.txt - Project AI Rules
+
